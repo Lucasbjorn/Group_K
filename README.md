@@ -15,6 +15,13 @@ We plan on adapting the neural circuit model and changing around different varia
 
 [The Role of Astrocytes in Neuroprotection after Brain Stroke: Potential Cell Therapy](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5376556/)
 
+
+[Glutamate Metabolism and Astrocytes](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4667713/)
+
+[Human astrocytes: Structure and Functions in the health brain](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5504258/)
+
+[A New Computational Model for Astrocytes and Their Role in Biologically Realistic Neural Networks](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6057343/)
+
 ### Extra
 If we have time, we want to explore astrocyte function in more depth.
 Can we start making changes without the completely updated version of code?
