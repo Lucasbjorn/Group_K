@@ -9,4 +9,5 @@ Model:
 
 ### Journal Articles
 [Astrocytes: Biology and Pathology](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2799634/)
+
 [The Role of Astrocytes in Neuroprotection after Brain Stroke: Potential Cell Therapy](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5376556/)
