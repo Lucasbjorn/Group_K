@@ -3,4 +3,5 @@ This is our research project.
 
 Research Question:
 
-Model:
+Model: [CA1_Cutsuridis](link(https://github.com/risecourse/CA1_Cutsuridis))
+
