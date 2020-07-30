@@ -7,7 +7,14 @@ Can we increase the effectiveness of astrocytes in CA1 neurons to stop the cells
 ### Model: [ CA1 Cutsuridis](https://github.com/risecourse/CA1_Cutsuridis)
 This is a neural circuit model, originally based in HOC and Neuron. Dr. Bezaire is adapting the code to Python 3.
 
+### Description of Research Process
+We plan on adapting the neural circuit model and changing around different variables to see if we can model the function of astrocytes on glutamate in synapses specifically. We want to add code for a threshold of glutamate in the synapse before the post synaptic cell dies. We want to record the firing patterns of neurons in the circuit to see if by simulating the affect of astroctyes, we can regulate the rate at which neurons fire even during a stroke.
+
 ### Journal Articles
 [Astrocytes: Biology and Pathology](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2799634/)
 
 [The Role of Astrocytes in Neuroprotection after Brain Stroke: Potential Cell Therapy](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5376556/)
+
+### Extra
+If we have time, we want to explore astrocyte function in more depth.
+Can we start making changes without the completely updated version of code?
