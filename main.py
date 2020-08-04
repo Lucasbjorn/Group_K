@@ -167,6 +167,10 @@ for i, spike_times_vec in enumerate(spike_times):
 
 simrun.show_output(soma_v_vec, dend_v_vec, t_vec)
 
+i=1
+plt.figure()
+plt.vlines(model_cell.spike_times, i + 0.5, i + 1.5)
+plt.show()
 # for i, spike_times_vec in enumerate(spike_times):
 #     plt.vlines(list(spike_times_vec), i + 0.5, i + 1.5)
 # simrun.saveopenimage(simrun.pyplot,"spikeplot.png") # plt.show()
