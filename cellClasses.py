@@ -35,7 +35,6 @@ class stimcell():
         nc = h.NetCon(self.pp, target)
         nc.threshold = thresh
         
-
         #self.spike_times = []
         #vecrecs = []
         #vecrecs.append(h.Vector())
@@ -64,11 +63,7 @@ class reduced_cell_model():
         self.define_geometry()
         self.define_biophysics()
         self.addSynapses(myTau)
-        self._spike_detector= h.NetCon(self.soma(.5)._ref_v, None, sec=self.soma)
-        self.spike_times= h.Vector()
-        self._spike_detector.record(self.spike_times)
-    
-    
+
     def create_sections(self):
         self.soma = h.Section(name='soma', cell=self)
         self.basal = h.Section(name='basal', cell=self)
@@ -78,7 +73,7 @@ class reduced_cell_model():
         self.iseg = h.Section(name='iseg', cell=self)
         self.axon = h.Section(name='axon', cell=self)
 
-    def  build_topology(self):
+    def    build_topology(self):
         self.basal.connect(self.soma(0.5))
         self.apical.connect(self.soma(1))
         self.tuft.connect(self.apical(1))
@@ -88,7 +83,7 @@ class reduced_cell_model():
 
 
     def recalculate_geometry(self):
-        self.soma.diam = L =  math.sqrt(self.soma_area/self.PI)
+        self.soma.diam = self.soma.L =  math.sqrt(self.soma_area/self.PI)
         self.basal.diam = self.basal_area/self.PI/self.basal.L    
         self.apical.diam = self.diam_apical    
         self.tuft.diam = self.tuft_area/self.PI/self.tuft.L
@@ -117,8 +112,17 @@ class reduced_cell_model():
         self.axon.L = 500
         self.iseg.L = 25
         self.axon.diam = 1.5
-        self.iseg.diam=1.8 #(0:1) = 2.0:1.5
-        self.hillock.diam=2.8 #(0:1) = 3.5:2.0
+        
+        self.iseg.diam = 1.75
+        self.hillock.diam = 2.75
+        # for seg in self.iseg:
+        #     seg.diam = 2.0 - seg.x*.5
+            
+        # for seg in self.hillock:
+        #     seg.diam = 3.5 - seg.x*1.5
+            
+        #self.iseg.diam=1.8 #(0:1) = 2.0:1.5
+        #self.hillock.diam=2.8 #(0:1) = 3.5:2.0
 
         self.diam_apical = self.apicalshaftoblique_area/self.PI/self.apical.L
         self.recalculate_geometry()
@@ -130,6 +134,7 @@ class reduced_cell_model():
     def recalculate_passive_properties(self):
         for sec in self.axosomatic_list:
             sec.g_pas = 1./self.Rm_axosomatic
+            
         for sec in self.apicaltree_list:
             sec.g_pas = self.soma.g_pas*self.spinefactor 
             sec.cm = self.soma.cm*self.spinefactor
@@ -139,23 +144,23 @@ class reduced_cell_model():
         h.distance(sec=self.soma)
         
         for sec in self.apicaltree_list:
+            based = h.distance(self.soma(0),sec(0))
             for seg in sec:
-                seg.gbar_kfast = self.soma(0.5).gbar_kfast * math.exp(-h.distance(seg.x)/self.decay_kfast)
-                seg.gbar_kslow = self.soma(0.5).gbar_kslow * math.exp(-h.distance(seg.x)/self.decay_kslow)
+                seg.gbar_kfast = self.soma(0.5).gbar_kfast * math.exp(-(seg.x*sec.L+based)/self.decay_kfast)
+                seg.gbar_kslow = self.soma(0.5).gbar_kslow * math.exp(-(seg.x*sec.L+based)/self.decay_kslow)
 
-# fix syntax: July 17        
-#        if h.distance(0)>0:
-#            for seg in self.tuft:
-#                seg.ih.mih = self.tuft.gbar_ih/h.distance(0)
-#                seg.nat.mnat = (self.tuft.gbar_nat-self.soma(0.5).gbar_nat)/h.distance(0)
-#        else:
-#            for seg in self.tuft:
-#                seg.ih.mih = self.tuft.gbar_ih/self.apical.L
-#                seg.nat.mnat = (self.tuft.gbar_nat-self.soma(0.5).gbar_nat)/self.apical.L
-        
-#        for seg in self.apical:
-#            seg.gbar_nat = self.apical.mnat*h.distance(seg.x) + self.soma(0.5).gbar_nat
-#            seg.gbar_ih = self.apical.mih*h.distance(seg.x)
+        d = h.distance(self.soma(0),self.tuft(0))
+        if d>0:
+            mih = self.tuft.gbar_ih/d
+            mnat = (self.tuft.gbar_nat-self.soma(0.5).gbar_nat)/d
+        else:
+            mih = self.tuft.gbar_ih/self.apical.L
+            mnat = (self.tuft.gbar_nat-self.soma(0.5).gbar_nat)/self.apical.L
+            
+        based = h.distance(self.soma(0),self.apical(0))
+        for seg in self.apical.allseg():
+            seg.gbar_nat = mnat*(seg.x*self.apical.L+based) + self.soma(0.5).gbar_nat
+            seg.gbar_ih = mih*(seg.x*self.apical.L+based)
 
     def define_biophysics(self):
         self.Rm_axosomatic = 15000
@@ -210,8 +215,8 @@ class reduced_cell_model():
 
         self.recalculate_passive_properties()
         self.recalculate_channel_densities()
+        #self.tuft.gbar_sca = 3.67649485*10 # TODO what is this
 
-        
 
     ######################/
 
@@ -288,7 +293,10 @@ class reduced_cell_model():
         self.kslow_list.append(self.apical)
         self.kslow_list.append(self.tuft)
 
-
+    def recordData(self):
+        self._spike_detector = h.NetCon(self.soma(0.5)._ref_v, None, sec=self.soma)
+        self.spike_times = h.Vector()
+        self._spike_detector.record(self.spike_times)
 
     def addSynapses(self,myTauValue):
     # Define synapses in various areas of the cell
