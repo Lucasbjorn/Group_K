@@ -1,58 +1,60 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Jul 28 12:50:51 2020
-
+Modified from Bahl et al 2012
+Converted to Python
+Added ability to receive synaptic inputs (and/or current injection)
 @author: maria_000
 """
-
-
 #################################
 # Load modules
 #################################
 
-import numpy
-
-import matplotlib 
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-
-from neuron import h, gui
+from neuron import h
 import simrun
-# h.load_file("stdrun.hoc")
-# h.load_file("nrngui.hoc") // load_file
-# h.nrn_load_dll("./channels/x86_64/.libs/libnrnmech.so")
+h.load_file("stdrun.hoc")
+h.load_file("nrngui.hoc") # load_file
 
 
 #################################
 # Set parameters
 #################################
-celsius = 37 # temperature = body temp
+h.celsius = 37 # temperature = body temp
 sltype="/"
 simname = "testcell"
-plotflag=1
+plotflag=2 # 0: don't open plots. 1: open python plot. 2: open python plot and photo file
 batchflag=1
 
-myTauValue = 0.5
+myTauValue = 0.5 # This is an example of how to modify synaptic parameters
+                 # Look in the cellClass file to see how this is used.
 
 fstem="Results" + sltype + simname
 print("simname = " + simname + ", fstem = " + fstem)
 
-mytstop = 325 # ms, length of the simulation, original:800
+mytstop = 800 # ms, length of the simulation
 
-addSynInputs = 1 # 2: synaptic inputs and current injection
-                 # 1: synaptic inputs only
-                 # 0: current injection only
+addSynInputs = 0 # 2: synaptic inputs and current injection
+				 # 1: synaptic inputs only
+				 # 0: current injection only
 
-stimPeriod = 325 #original:125
+# parameters for current injection, will be applied if addSynInputs is 0 or 2
+injectionLevel = 0.4 # nA
+injectionDuration = 500 # ms
+injectionStart = 100 # ms
+
+
+stimPeriod = 125 # ms, the interval between input spikes
+                 # from the artificial presynaptic neurons
+
 
 if addSynInputs>0:
-    numExcCells = 2
-    numInhDendCells = 2
-    numInhSomaCells = 1
+	numExcCells = 2
+	numInhDendCells = 2
+	numInhSomaCells = 1
 else:
-    numExcCells = 0
-    numInhDendCells = 0
-    numInhSomaCells = 0
+	numExcCells = 0
+	numInhDendCells = 0
+	numInhSomaCells = 0
 
 ntot = numExcCells + numInhDendCells + numInhSomaCells
 
@@ -64,7 +66,7 @@ import define_stimcells
 import cellClasses
 
 # Create stimulating cells
-excStimcell_list, inhDendStimcell_list, inhSomaStimcell_list = define_stimcells.make_stim_cells(numExcCells, numInhDendCells, numInhSomaCells, stimPeriod)
+excStimcell_list, inhDendStimcell_list, inhSomaStimcell_list, cells = define_stimcells.make_stim_cells(numExcCells, numInhDendCells, numInhSomaCells, stimPeriod)
 
 # Create model pyramidal cell
 model_cell = cellClasses.reduced_cell_model(myTau=myTauValue)
@@ -72,63 +74,71 @@ model_cell.excStimcell_list = excStimcell_list
 model_cell.inhDendStimcell_list = inhDendStimcell_list
 model_cell.inhSomaStimcell_list = inhSomaStimcell_list
 
-from init_models_with_ca import init_model2
 
-model_cell = init_model2.setEphysParams(model_cell)
+# The next two lines are where you can set which cell to use. Different
+# pyramidal cells (and these pyramidal cell models) have slightly
+# different electrical personalities (ephys or electrophysiology is the
+# technical term for that). You can choose from init_model1, init_model2,
+# ...3, 4, 6, 7, 8 in the init_models_with_ca folder, currently.
+from init_models_with_ca import init_model1
+
+model_cell = init_model1.setEphysParams(model_cell)
 model_cell.recalculate_passive_properties()
 model_cell.recalculate_channel_densities()
 
-# for sec in model_cell.all:
-#     sec.e_pas =  -45
-# for seg in model_cell.soma:
-#  	seg.gbar_nat = 236.616175 *.4
-# for seg in model_cell.soma:
-#    	seg.gbar_kfast = 67.197508 *2.5
-# for seg in model_cell.soma:
-#    	seg.gbar_kslow = 475.820646 *2.5
-# for seg in model_cell.soma:
-#    	seg.gbar_nap = 1.443953*.4
-# Connect stimulating cells to synapses on the model pyramidal cell
+cells.append(model_cell) # add to list of cells
 
+# # this is an example of altering the resting membrane potential
+# for sec in model_cell.all:
+# 	sec.e_pas = -83.056442
+# h.v_init = -75
+# model_cell.recalculate_passive_properties()
+
+
+
+# If synaptic inputs were speficied above,
+# the lists below will be populates and the
+# code will efine synapses on the model pyramidal cell
+# and connect stimulating cells to it
 nclist = [] #new List()
 print("excStimcell_list length = ", len(model_cell.excStimcell_list), " and preExcDend_list length = ", len(model_cell.preExcDend_list))
 
 for r in range(len(model_cell.excStimcell_list)):
-    for j in range(len(model_cell.preExcDend_list)): # For each synapse location in the list of excitatory synapses on the dendrite
-        syn = model_cell.preExcDend_list[j] # grab the synapse object
-        #ncstim = h.NetCon(model_cell.excStimcell_list[r], syn)
-        nc = model_cell.excStimcell_list[r].connect2target(syn) # connect the presynaptic cell (excStimcell_list.object(r) to the synapse object on the postsynaptic cell (syn)
-        nclist.append(nc)
-        
-        nc.delay = 3 # ms, the length of the axonal conduction delay and the synaptic delay
-        nc.weight[0] = model_cell.excitatory_syn_weight
-        print("adding exc syn from ", r, " to Excitatory synapse #", j)
+	for j in range(len(model_cell.preExcDend_list)): # For each synapse location in the list of excitatory synapses on the dendrite
+		syn = model_cell.preExcDend_list[j] # grab the synapse object
+		#ncstim = h.NetCon(model_cell.excStimcell_list[r], syn)
+		nc = model_cell.excStimcell_list[r].connect2target(syn) # connect the presynaptic cell (excStimcell_list.object(r) to the synapse object on the postsynaptic cell (syn)
+		nclist.append(nc)
+		
+		nc.delay = 3 # ms, the length of the axonal conduction delay and the synaptic delay
+		nc.weight[0] = model_cell.excitatory_syn_weight
+		print("adding exc syn from ", r, " to Excitatory synapse #", j)
 
 
 for r in range(len(model_cell.inhDendStimcell_list)):
-    for j in range(len(model_cell.preInhDend_list)): # For each synapse location in the list of inhibitory synapses on the dendrite
-        syn = model_cell.preInhDend_list[j] # grab the synapse object
-        nc = model_cell.inhDendStimcell_list[r].connect2target(syn) # connect the presynaptic cell (inhDendStimcell_list.object(r) to the synapse object on the postsynaptic cell (syn)
-        nclist.append(nc)
-        nc.delay = 3 # ms, the length of the axonal conduction delay and the synaptic delay
-        nc.weight[0] = model_cell.inhDend_syn_weight
-        print("adding inhdend syn from ", r, " to inhibitory dendritic synapse #", j)
+	for j in range(len(model_cell.preInhDend_list)): # For each synapse location in the list of inhibitory synapses on the dendrite
+		syn = model_cell.preInhDend_list[j] # grab the synapse object
+		nc = model_cell.inhDendStimcell_list[r].connect2target(syn) # connect the presynaptic cell (inhDendStimcell_list.object(r) to the synapse object on the postsynaptic cell (syn)
+		nclist.append(nc)
+		nc.delay = 3 # ms, the length of the axonal conduction delay and the synaptic delay
+		nc.weight[0] = model_cell.inhDend_syn_weight
+		print("adding inhdend syn from ", r, " to inhibitory dendritic synapse #", j)
 
 
 for r in range(len(model_cell.inhSomaStimcell_list)):
-    for j in range(len(model_cell.preInhSoma_list)): # For each synapse location in the list of inhibitory synapses on the soma
-        syn = model_cell.preInhSoma_list[j] # grab the synapse object
-        nc = model_cell.inhSomaStimcell_list[r].connect2target(syn) # connect the presynaptic cell (inhSomaStimcell_list.object(r) to the synapse object on the postsynaptic cell (syn)
-        nclist.append(nc)
-        nc.delay = 3 # ms, the length of the axonal conduction delay and the synaptic delay
-        nc.weight[0] = model_cell.inhSoma_syn_weight
-        print("adding inhsoma syn from ", r, " to inhibitory somatic synapse #", j)
+	for j in range(len(model_cell.preInhSoma_list)): # For each synapse location in the list of inhibitory synapses on the soma
+		syn = model_cell.preInhSoma_list[j] # grab the synapse object
+		nc = model_cell.inhSomaStimcell_list[r].connect2target(syn) # connect the presynaptic cell (inhSomaStimcell_list.object(r) to the synapse object on the postsynaptic cell (syn)
+		nclist.append(nc)
+		nc.delay = 3 # ms, the length of the axonal conduction delay and the synaptic delay
+		nc.weight[0] = model_cell.inhSoma_syn_weight
+		print("adding inhsoma syn from ", r, " to inhibitory somatic synapse #", j)
 
 
 
 # Note: the configuration of the for loop decides how many synapses are going to made:
 # for r=0, inhSomaStimcell_list.count()-1{
-#     for j=0, preInhSoma_list.count()-1 {
+# 	for j=0, preInhSoma_list.count()-1 {
 #      ...
 #  }
 # }
@@ -153,35 +163,39 @@ for r in range(len(model_cell.inhSomaStimcell_list)):
 
 
 #################################
+# Current injection
+#################################
+
+if addSynInputs!=1:
+    stimobj = h.IClamp(model_cell.soma(0.5))
+    stimobj.delay = injectionStart # ms, time after start of sim when you want the current injection to begin
+    stimobj.dur = injectionDuration # ms, duration of current pulse
+    stimobj.amp = injectionLevel # nA
+    # stimobj.i # nA, contains the level of current being injected at any given time during simulation   
+
+
+#################################
 # Run simulation and record results
 #################################
-# if plotflag==1:
-#    h.load_file("regular_spiking.ses")
 
-
-# h.load_file("example1.hoc")
-soma_v_vec, dend_v_vec, t_vec = simrun.set_recording_vectors(model_cell)
-spike_times = [h.Vector() for nc in nclist]
-for nc, spike_times_vec in zip(nclist, spike_times):
-    nc.record(spike_times_vec)
+soma_v_vec, dend_v_vec, tuft_v_vec, t_vec, spike_times = simrun.set_recording_vectors(model_cell, nclist)
 
 simrun.simulate(tstop=mytstop)
 
 #################################
 # Plot results and write results files
 #################################
-# h.load_file("produceoutput.hoc")
-for i, spike_times_vec in enumerate(spike_times):
-    print('cell {}: {}'.format(i, list(spike_times_vec)))
+    
+with open("{}_spikes.dat".format(fstem), 'w') as f:
+    f.write("{}\t{}\n".format("time","cell"))
+    i=1
+    for spk in spike_times:
+        f.write("{:.2f}\t{}\n".format(spk, i))
 
-simrun.show_output(soma_v_vec, dend_v_vec, t_vec)
-print(list(model_cell.spike_times))
+with open("{}_voltages.dat".format(fstem), 'w') as f:
+    f.write("{}\t{}\t{}\t{}\n".format("time", "soma_v", "apical_v", "tuft_v"))
+    for i, v in enumerate(soma_v_vec):
+        f.write("{:.2f}\t{:.2f}\t{:.2f}\t{:.2f}\n".format(i*h.dt, v, dend_v_vec[i], tuft_v_vec[i]))
 
-i=1
-plt.figure()
-plt.vlines(model_cell.spike_times, i + 0.5, i + 1.5)
-simrun.saveopenimage(simrun.pyplot,"spikeplot.png") # plt.show()
 
-# for i, spike_times_vec in enumerate(spike_times):
-#     plt.vlines(list(spike_times_vec), i + 0.5, i + 1.5)
-# simrun.saveopenimage(simrun.pyplot,"spikeplot.png") # plt.show()
+simrun.show_output(soma_v_vec, dend_v_vec, tuft_v_vec, t_vec, spike_times, plotflag, fstem)
