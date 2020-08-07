@@ -21,8 +21,8 @@ h.load_file("nrngui.hoc") # load_file
 #################################
 h.celsius = 37 # temperature = body temp
 sltype="/"
-simname = "testcell"
-plotflag=2 # 0: don't open plots. 1: open python plot. 2: open python plot and photo file
+simname = "testcell(gnatandkfast.13 gnapandkslow7.5)"
+plotflag=1 # 0: don't open plots. 1: open python plot. 2: open python plot and photo file
 batchflag=1
 
 myTauValue = 0.5 # This is an example of how to modify synaptic parameters
@@ -31,19 +31,19 @@ myTauValue = 0.5 # This is an example of how to modify synaptic parameters
 fstem="Results" + sltype + simname
 print("simname = " + simname + ", fstem = " + fstem)
 
-mytstop = 800 # ms, length of the simulation
+mytstop = 487.5 # ms, length of the simulation
 
-addSynInputs = 0 # 2: synaptic inputs and current injection
+addSynInputs = 1 # 2: synaptic inputs and current injection
 				 # 1: synaptic inputs only
 				 # 0: current injection only
 
 # parameters for current injection, will be applied if addSynInputs is 0 or 2
 injectionLevel = 0.4 # nA
-injectionDuration = 500 # ms
-injectionStart = 100 # ms
+injectionDuration = 162.5 # ms
+injectionStart = 0 # ms
 
 
-stimPeriod = 125 # ms, the interval between input spikes
+stimPeriod = 325 # ms, the interval between input spikes
                  # from the artificial presynaptic neurons
 
 
@@ -93,7 +93,14 @@ cells.append(model_cell) # add to list of cells
 # 	sec.e_pas = -83.056442
 # h.v_init = -75
 # model_cell.recalculate_passive_properties()
-
+# for seg in model_cell.soma:
+#  	seg.gbar_nat = 284.546493*.13
+# for seg in model_cell.soma:
+#  	seg.gbar_kfast = 50.802287*.13
+# for seg in model_cell.soma:
+#  	seg.gbar_kslow = 361.584735*7.5
+# for seg in model_cell.soma:
+#  	seg.gbar_nap = 0.873246*7.5
 
 
 # If synaptic inputs were speficied above,
@@ -199,3 +206,5 @@ with open("{}_voltages.dat".format(fstem), 'w') as f:
 
 
 simrun.show_output(soma_v_vec, dend_v_vec, tuft_v_vec, t_vec, spike_times, plotflag, fstem)
+
+print(list(spike_times))

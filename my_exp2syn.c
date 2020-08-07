@@ -247,7 +247,7 @@ extern void _cvode_abstol( Symbol**, double*, int);
  pnt_receive[_mechtype] = _net_receive;
  pnt_receive_size[_mechtype] = 1;
  	hoc_register_var(hoc_scdoub, hoc_vdoub, hoc_intfunc);
- 	ivoc_help("help ?1 MyExp2Syn C:/Users/maria_000/Documents/GitHub/BahlSynapsesPy/my_exp2syn.mod\n");
+ 	ivoc_help("help ?1 MyExp2Syn C:/Users/Spri/Desktop/BahlSynapsesPy-master/my_exp2syn.mod\n");
  hoc_register_limits(_mechtype, _hoc_parm_limits);
  hoc_register_units(_mechtype, _hoc_parm_units);
  }

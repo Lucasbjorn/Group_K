@@ -46,17 +46,18 @@ extern double hoc_Exp(double);
 #define t _nt->_t
 #define dt _nt->_dt
 #define vshift _p[0]
-#define m_inf _p[1]
-#define tau_m _p[2]
-#define gk _p[3]
-#define m _p[4]
-#define ek _p[5]
-#define Dm _p[6]
-#define ik _p[7]
-#define tau_peak _p[8]
-#define tadj _p[9]
-#define v _p[10]
-#define _g _p[11]
+#define gbar _p[1]
+#define m_inf _p[2]
+#define tau_m _p[3]
+#define gk _p[4]
+#define m _p[5]
+#define ek _p[6]
+#define Dm _p[7]
+#define ik _p[8]
+#define tau_peak _p[9]
+#define tadj _p[10]
+#define v _p[11]
+#define _g _p[12]
 #define _ion_ek	*_ppvar[0]._pval
 #define _ion_ik	*_ppvar[1]._pval
 #define _ion_dikdv	*_ppvar[2]._pval
@@ -124,8 +125,6 @@ static void _check_table_thread(double* _p, Datum* _ppvar, Datum* _thread, _NrnT
    _check_exptable(_p, _ppvar, _thread, _nt);
  }
  /* declare global and static user variables */
-#define gbar gbar_km
- double gbar = 0;
 #define taumax taumax_km
  double taumax = 1000;
 #define usetable usetable_km
@@ -136,8 +135,8 @@ static void _check_table_thread(double* _p, Datum* _ppvar, Datum* _thread, _NrnT
  0,0,0
 };
  static HocParmUnits _hoc_parm_units[] = {
- "gbar_km", "pS/um2",
  "taumax_km", "ms",
+ "gbar_km", "pS/um2",
  "tau_m_km", "ms",
  "gk_km", "mho/cm2",
  0,0
@@ -146,7 +145,6 @@ static void _check_table_thread(double* _p, Datum* _ppvar, Datum* _thread, _NrnT
  static double m0 = 0;
  /* connect global user variables to hoc */
  static DoubScal hoc_scdoub[] = {
- "gbar_km", &gbar_km,
  "taumax_km", &taumax_km,
  "usetable_km", &usetable_km,
  0,0
@@ -173,6 +171,7 @@ static void _ode_matsol(_NrnThread*, _Memb_list*, int);
  "7.7.0",
 "km",
  "vshift_km",
+ "gbar_km",
  0,
  "m_inf_km",
  "tau_m_km",
@@ -188,11 +187,12 @@ extern Prop* need_memb(Symbol*);
 static void nrn_alloc(Prop* _prop) {
 	Prop *prop_ion;
 	double *_p; Datum *_ppvar;
- 	_p = nrn_prop_data_alloc(_mechtype, 12, _prop);
+ 	_p = nrn_prop_data_alloc(_mechtype, 13, _prop);
  	/*initialize range parameters*/
  	vshift = 0;
+ 	gbar = 0;
  	_prop->param = _p;
- 	_prop->param_size = 12;
+ 	_prop->param_size = 13;
  	_ppvar = nrn_prop_datum_alloc(_mechtype, 4, _prop);
  	_prop->dparam = _ppvar;
  	/*connect ionic variables to this model*/
@@ -230,7 +230,7 @@ extern void _cvode_abstol( Symbol**, double*, int);
   hoc_reg_nmodl_text(_mechtype, nmodl_file_text);
   hoc_reg_nmodl_filename(_mechtype, nmodl_filename);
 #endif
-  hoc_register_prop_size(_mechtype, 12, 4);
+  hoc_register_prop_size(_mechtype, 13, 4);
   hoc_register_dparam_semantics(_mechtype, 0, "k_ion");
   hoc_register_dparam_semantics(_mechtype, 1, "k_ion");
   hoc_register_dparam_semantics(_mechtype, 2, "k_ion");
@@ -238,7 +238,7 @@ extern void _cvode_abstol( Symbol**, double*, int);
  	hoc_register_cvode(_mechtype, _ode_count, _ode_map, _ode_spec, _ode_matsol);
  	hoc_register_tolerance(_mechtype, _hoc_state_tol, &_atollist);
  	hoc_register_var(hoc_scdoub, hoc_vdoub, hoc_intfunc);
- 	ivoc_help("help ?1 km C:/Users/maria_000/Documents/GitHub/BahlSynapsesPy/IKM.mod\n");
+ 	ivoc_help("help ?1 km C:/Users/Spri/Desktop/BahlSynapsesPy-master/IKM.mod\n");
  hoc_register_limits(_mechtype, _hoc_parm_limits);
  hoc_register_units(_mechtype, _hoc_parm_units);
  }
@@ -603,7 +603,7 @@ static const char* nmodl_file_text =
   "NEURON {\n"
   "	SUFFIX km : renamend (Armin Jul 09)\n"
   "	USEION k READ ek WRITE ik\n"
-  "    RANGE gkbar, m_inf, tau_m, gk, m, vshift\n"
+  "    RANGE gbar, m_inf, tau_m, gk, m, vshift\n"
   "	GLOBAL taumax\n"
   "\n"
   "}\n"

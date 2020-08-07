@@ -48,18 +48,19 @@ extern double hoc_Exp(double);
 #define inactF _p[0]
 #define actF _p[1]
 #define gbar _p[2]
-#define gca _p[3]
-#define minf _p[4]
-#define hinf _p[5]
-#define mtau _p[6]
-#define htau _p[7]
-#define m _p[8]
-#define h _p[9]
-#define ica _p[10]
-#define eca _p[11]
-#define Dm _p[12]
-#define Dh _p[13]
-#define _g _p[14]
+#define vshift _p[3]
+#define gca _p[4]
+#define minf _p[5]
+#define hinf _p[6]
+#define mtau _p[7]
+#define htau _p[8]
+#define m _p[9]
+#define h _p[10]
+#define ica _p[11]
+#define eca _p[12]
+#define Dm _p[13]
+#define Dh _p[14]
+#define _g _p[15]
 #define _ion_eca	*_ppvar[0]._pval
 #define _ion_ica	*_ppvar[1]._pval
 #define _ion_dicadv	*_ppvar[2]._pval
@@ -124,8 +125,6 @@ extern void hoc_reg_nmodl_filename(int, const char*);
  double tadj = 0;
 #define temp temp_sca
  double temp = 23;
-#define vshift vshift_sca
- double vshift = 0;
 #define vmax vmax_sca
  double vmax = 100;
 #define vmin vmin_sca
@@ -135,13 +134,13 @@ extern void hoc_reg_nmodl_filename(int, const char*);
  0,0,0
 };
  static HocParmUnits _hoc_parm_units[] = {
- "vshift_sca", "mV",
  "cao_sca", "mM",
  "cai_sca", "mM",
  "temp_sca", "degC",
  "vmin_sca", "mV",
  "vmax_sca", "mV",
  "gbar_sca", "pS/um2",
+ "vshift_sca", "mV",
  "gca_sca", "pS/um2",
  "mtau_sca", "ms",
  "htau_sca", "ms",
@@ -153,7 +152,6 @@ extern void hoc_reg_nmodl_filename(int, const char*);
  static double v = 0;
  /* connect global user variables to hoc */
  static DoubScal hoc_scdoub[] = {
- "vshift_sca", &vshift_sca,
  "cao_sca", &cao_sca,
  "cai_sca", &cai_sca,
  "temp_sca", &temp_sca,
@@ -187,6 +185,7 @@ static void _ode_matsol(_NrnThread*, _Memb_list*, int);
  "inactF_sca",
  "actF_sca",
  "gbar_sca",
+ "vshift_sca",
  0,
  "gca_sca",
  "minf_sca",
@@ -205,13 +204,14 @@ extern Prop* need_memb(Symbol*);
 static void nrn_alloc(Prop* _prop) {
 	Prop *prop_ion;
 	double *_p; Datum *_ppvar;
- 	_p = nrn_prop_data_alloc(_mechtype, 15, _prop);
+ 	_p = nrn_prop_data_alloc(_mechtype, 16, _prop);
  	/*initialize range parameters*/
  	inactF = 3;
  	actF = 1;
  	gbar = 0;
+ 	vshift = 0;
  	_prop->param = _p;
- 	_prop->param_size = 15;
+ 	_prop->param_size = 16;
  	_ppvar = nrn_prop_datum_alloc(_mechtype, 4, _prop);
  	_prop->dparam = _ppvar;
  	/*connect ionic variables to this model*/
@@ -248,7 +248,7 @@ extern void _cvode_abstol( Symbol**, double*, int);
   hoc_reg_nmodl_text(_mechtype, nmodl_file_text);
   hoc_reg_nmodl_filename(_mechtype, nmodl_filename);
 #endif
-  hoc_register_prop_size(_mechtype, 15, 4);
+  hoc_register_prop_size(_mechtype, 16, 4);
   hoc_register_dparam_semantics(_mechtype, 0, "ca_ion");
   hoc_register_dparam_semantics(_mechtype, 1, "ca_ion");
   hoc_register_dparam_semantics(_mechtype, 2, "ca_ion");
@@ -256,7 +256,7 @@ extern void _cvode_abstol( Symbol**, double*, int);
  	hoc_register_cvode(_mechtype, _ode_count, _ode_map, _ode_spec, _ode_matsol);
  	hoc_register_tolerance(_mechtype, _hoc_state_tol, &_atollist);
  	hoc_register_var(hoc_scdoub, hoc_vdoub, hoc_intfunc);
- 	ivoc_help("help ?1 sca C:/Users/maria_000/Documents/GitHub/BahlSynapsesPy/SlowCa.mod\n");
+ 	ivoc_help("help ?1 sca C:/Users/Spri/Desktop/BahlSynapsesPy-master/SlowCa.mod\n");
  hoc_register_limits(_mechtype, _hoc_parm_limits);
  hoc_register_units(_mechtype, _hoc_parm_units);
  }
@@ -532,15 +532,15 @@ static const char* nmodl_file_text =
   "	SUFFIX sca\n"
   "	USEION ca READ eca WRITE ica\n"
   "	RANGE m, h, gca, gbar\n"
-  "	RANGE minf, hinf, mtau, htau, inactF, actF\n"
-  "	GLOBAL q10, temp, tadj, vmin, vmax, vshift\n"
+  "	RANGE minf, hinf, mtau, htau, inactF, actF, vshift\n"
+  "	GLOBAL q10, temp, tadj, vmin, vmax\n"
   "}\n"
   "\n"
   "PARAMETER {\n"
   "    inactF = 3\n"
   "	actF   = 1\n"
   "	gbar = 0   	(pS/um2)	: 0.12 mho/cm2\n"
-  "	vshift = 0	(mV)		: voltage shift (affects all)\n"
+  "	vshift = 0	(mV)		: voltage shift (affects all but transferred from GLOBAL to RANGE for easier access in python - TODO)\n"
   "\n"
   "	cao  = 2.5	(mM)	        : external ca concentration\n"
   "	cai		(mM)\n"
