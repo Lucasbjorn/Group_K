@@ -21,7 +21,7 @@ h.load_file("nrngui.hoc") # load_file
 #################################
 h.celsius = 37 # temperature = body temp
 sltype="/"
-simname = "testcell(gnatandkfast.13 gnapandkslow7.5)"
+simname = "testcell"
 plotflag=1 # 0: don't open plots. 1: open python plot. 2: open python plot and photo file
 batchflag=1
 
